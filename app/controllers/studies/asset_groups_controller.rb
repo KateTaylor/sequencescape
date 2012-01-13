@@ -39,9 +39,10 @@ class Studies::AssetGroupsController < ApplicationController
     @study     = Study.find(params[:study_id])
     @asset_group = AssetGroup.new(params[:asset_group])
     @asset_group.study = @study
+    @asset_group.user_id = current_user.id
 
     respond_to do |format|
-      if @asset_group.save
+      if @asset_group.save!
         flash[:notice] = 'AssetGroup was successfully created.'
         format.html { redirect_to study_asset_group_path(@study, @asset_group) }
         format.xml  { render :xml => @asset_group, :status => :created, :location => @asset_group }

@@ -10,7 +10,7 @@ class AssetGroup < ActiveRecord::Base
   has_many :asset_group_assets
   has_many :assets, :through => :asset_group_assets
 
-  validates_presence_of :name, :study
+  validates_presence_of :name, :study, :user
   validates_uniqueness_of :name
   
   
