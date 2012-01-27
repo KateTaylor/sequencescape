@@ -78,3 +78,14 @@ constraint:
    password: psdd
    host: mcs6
    port: 3321
+
+# postgres evaluation
+
+postgres: 
+  adapter: postgresql
+  username: pspd
+  password: psdp
+  host: pgsrv5
+  port: 5438
+
+# end

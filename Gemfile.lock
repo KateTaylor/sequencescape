@@ -145,6 +145,7 @@ GEM
     parallel (0.5.3)
     parallel_tests (0.4.16)
       parallel
+    pg (0.12.2)
     polyglot (0.3.1)
     rack (1.1.2)
     rack-acceptable (0.1.0)
@@ -242,6 +243,7 @@ DEPENDENCIES
   net-ldap
   nokogiri
   parallel_tests
+  pg (~> 0.12.2)
   rack-acceptable
   rails (= 2.3.11)
   rcov

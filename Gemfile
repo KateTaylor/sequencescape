@@ -17,6 +17,7 @@ gem "curb"
 gem "fastercsv", "~>1.4.0"
 gem "formtastic", "~>1.2.0"
 gem "mysql"
+gem "pg", "~> 0.12.2"
 gem "spreadsheet"
 gem "will_paginate"
 gem 'net-ldap'
