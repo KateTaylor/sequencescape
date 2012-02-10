@@ -535,6 +535,22 @@ class Asset < ActiveRecord::Base
   def is_a_resource
    self.resource == true
   end
+ 
+  def self.find_by_asset_id(asset_id)
+    begin
+      plate = Plate.find(asset_id)
+    rescue ActiveRecord::RecordNotFound
+      begin
+        receptacle = Aliquot::Receptacle.find(asset_id)
+      rescue ActiveRecord::RecordNotFound
+        begin
+          fragment = Fragment.find(asset_id)
+        rescue 
+          raise ActiveRecord::RecordNotFound, "Couldn't find asset with id #{asset_id}"
+        end
+      end 
+    end
+  end
 
   private
   def set_default_prefix
