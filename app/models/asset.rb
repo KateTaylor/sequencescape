@@ -379,7 +379,7 @@ class Asset < ActiveRecord::Base
       prefix = _pre
     else
       begin
-        asset = Asset.find(params[:id])
+        asset = Asset.find_from_id(params[:id])
         prefix = asset.prefix
       rescue
       end
@@ -531,22 +531,14 @@ class Asset < ActiveRecord::Base
   
   def is_a_resource
    self.resource == true
+ end
+
+  def self.find_from_id(asset_id)
+    asset = Aliquot::Receptacle.find_by_id(asset_id) || Plate.find_by_id(asset_id) || Fragment.find_by_id(asset_id)
   end
- 
-  def self.find_by_asset_id(asset_id)
-    begin
-      plate = Plate.find(asset_id)
-    rescue ActiveRecord::RecordNotFound
-      begin
-        receptacle = Aliquot::Receptacle.find(asset_id)
-      rescue ActiveRecord::RecordNotFound
-        begin
-          fragment = Fragment.find(asset_id)
-        rescue 
-          raise ActiveRecord::RecordNotFound, "Couldn't find asset with id #{asset_id}"
-        end
-      end 
-    end
+
+  def self.find_from_barcode(barcode)
+    asset = Aliquot::Receptacle.find_by_barcode(barcode) || Plate.find_by_barcode(barcode) || Fragment.find_by_barcode(barcode)
   end
 
   private
