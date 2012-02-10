@@ -4,6 +4,11 @@ class Asset < ActiveRecord::Base
   include AssetLink::Associations
 
   self.abstract_class = true 
+  instance_variable_set :@columns, []
+
+  #def initialize
+  #  raise "Class Asset cannot be initialized as it is now an abstract class" if self.class == Asset
+  #end
 
   module InstanceMethods
     # Assets are, by default, non-barcoded
@@ -49,10 +54,6 @@ class Asset < ActiveRecord::Base
   named_scope :requests_as_source_is_a?, lambda { |t| { :joins => :requests_as_source, :conditions => { :requests => { :sti_type => [ t, *Class.subclasses_of(t) ].map(&:name) } } } }
 
   extend ContainerAssociation::Extension
-
-  def initialize
-    raise "Class Asset cannot be initialized as it is now an abstract class" if self.class == Asset
-  end
 
   # to override in subclass
   def location
