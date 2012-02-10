@@ -8,10 +8,6 @@ class Plate < Asset
 
   SOURCE_PLATE_TYPES = ["ABgene_0765","ABgene_0800"]
 
-  #def initialize
-  #  Asset.new
-  #end
-
   # The default state for a plate comes from the plate purpose
   delegate :default_state, :to => :plate_purpose, :allow_nil => true
   def state

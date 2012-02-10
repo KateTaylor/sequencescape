@@ -6,10 +6,6 @@ class Asset < ActiveRecord::Base
   self.abstract_class = true 
   instance_variable_set :@columns, []
 
-  #def initialize
-  #  raise "Class Asset cannot be initialized as it is now an abstract class" if self.class == Asset
-  #end
-
   module InstanceMethods
     # Assets are, by default, non-barcoded
     def generate_barcode
