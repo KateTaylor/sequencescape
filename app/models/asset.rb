@@ -533,12 +533,24 @@ class Asset < ActiveRecord::Base
    self.resource == true
  end
 
+  def self.find_from
+    asset = Aliquot::Receptacle.find || Plate.find || Fragment.find
+  end
+
+  def self.find_from(*args)
+    asset = Aliquot::Receptacle.find(*args) || Plate.find(*args) || Fragment.find(*args)
+  end
+
   def self.find_from_id(asset_id)
     asset = Aliquot::Receptacle.find_by_id(asset_id) || Plate.find_by_id(asset_id) || Fragment.find_by_id(asset_id)
   end
 
   def self.find_from_barcode(barcode)
     asset = Aliquot::Receptacle.find_by_barcode(barcode) || Plate.find_by_barcode(barcode) || Fragment.find_by_barcode(barcode)
+  end
+
+  def self.find_from_name(name)
+    asset = Aliquot::Receptacle.find_by_name(name) || Plate.find_by_name(name) || Fragment.find_by_name(name)
   end
 
   private

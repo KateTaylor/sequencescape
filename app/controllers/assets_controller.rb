@@ -21,7 +21,7 @@ class AssetsController < ApplicationController
       elsif params[:sample_id]
           format.xml  { render :xml => Sample.find(params[:sample_id]).assets.to_xml }
       elsif params[:asset_id]
-        @asset = Asset.find(params[:asset_id])
+        @asset = Asset.find_from_id(params[:asset_id])
         format.xml  { render :xml => ["relations" => {"parents" => @asset.parents, "children" => @asset.children}].to_xml }
       end
     end
@@ -36,7 +36,10 @@ class AssetsController < ApplicationController
   end
 
   def new
-    @asset = Asset.new
+    sti_type    = params[:asset].delete(:sti_type) or raise StandardError, "No asset type specified"
+    asset_class = sti_type.constantize
+
+    @asset = asset_class.new
 		@asset_types = { "Sample Tube" =>'SampleTube', "Library Tube" => 'LibraryTube', "Hybridization Buffer Spiked" => "SpikedBuffer" }
 
     respond_to do |format|
@@ -51,8 +54,8 @@ class AssetsController < ApplicationController
   def find_parents(text)
     return [] unless text.present?
       names = text.lines.map(&:chomp).reject { |l| l.blank? }
-      objects = Asset.find(:all, :conditions => {:id => names})
-      objects += Asset.find(:all, :conditions => {:barcode => names})
+      objects = Asset.find_from(:all, :conditions => {:id => names})
+      objects += Asset.find_from(:all, :conditions => {:barcode => names})
       name_set = Set.new(names)
       found_set = Set.new(objects.map(&:name))
       not_found = name_set - found_set
@@ -69,7 +72,7 @@ class AssetsController < ApplicationController
       # Find the parent asset up front
       parent, parent_param = nil, first_param(:parent_asset)
       if parent_param.present?
-        parent = Asset.find_by_id(parent_param) || Asset.find_from_machine_barcode(parent_param) || Asset.find_by_name(parent_param)
+        parent = Asset.find_from_id(parent_param) || Asset.find_from_machine_barcode(parent_param) || Asset.find_from_name(parent_param)
         raise StandardError, "Cannot find the parent asset #{parent_param.inspect}" if parent.nil?
       end
 
@@ -214,7 +217,7 @@ class AssetsController < ApplicationController
     return print_asset_labels(asset_url(@asset), asset_url(@asset))
   end
   def submit_wells
-    @asset = Asset.find params[:id]
+    @asset = Asset.find_from_id params[:id]
   end
 
   def show_plate
@@ -223,7 +226,7 @@ class AssetsController < ApplicationController
   before_filter :prepare_asset, :only => [ :new_request, :create_request ]
 
   def prepare_asset
-    @asset = Asset.find(params[:id])
+    @asset = Asset.find_from_id(params[:id])
   end
   private :prepare_asset
 
@@ -300,7 +303,7 @@ class AssetsController < ApplicationController
   def lookup
     if params[:asset] && params[:asset][:barcode]
       id = params[:asset][:barcode][3,7].to_i
-      @assets = Asset.find(:all, :conditions => {:barcode => id}).paginate :per_page => 50, :page => params[:page]
+      @assets = Asset.find_from(:all, :conditions => {:barcode => id}).paginate :per_page => 50, :page => params[:page]
 
       if @assets.size == 1
         @asset = @assets.first
@@ -326,7 +329,7 @@ class AssetsController < ApplicationController
   end
 
   def filtered_move
-    @asset = Asset.find(params[:id])
+    @asset = Asset.find_from_id(params[:id])
     if @asset.resource
       @studies = []
       @studies_from = []
@@ -344,7 +347,7 @@ class AssetsController < ApplicationController
   end
 
   def select_asset_name_for_move
-    @asset = Asset.find(params[:asset_id])
+    @asset = Asset.find_from_id(params[:asset_id])
     study = Study.find_by_id(params[:study_id_to])
     @assets = []
     unless study.nil?
@@ -358,7 +361,7 @@ class AssetsController < ApplicationController
   end
 
   def move_single(params)
-    @asset          = Asset.find(params[:id])
+    @asset          = Asset.find_from_id(params[:id])
     @study_from     = Study.find(params[:study_id_from])
     @study_to       = Study.find(params[:study_id_to])
     @asset_group    = AssetGroup.find_by_id(params[:asset_group_id])
@@ -371,7 +374,7 @@ class AssetsController < ApplicationController
   end
 
   def move
-    @asset = Asset.find(params[:id])
+    @asset = Asset.find_from_id(params[:id])
     unless check_valid_values(params)
       redirect_to :action => :filtered_move, :id => params[:id]
       return
@@ -396,9 +399,9 @@ class AssetsController < ApplicationController
       redirect_to :action => "find_by_barcode"
     else
       if barcode.size == 13 && Barcode.check_EAN(barcode)
-        @asset = Asset.find_by_barcode(Barcode.split_barcode(barcode)[1])
+        @asset = Asset.find_from_barcode(Barcode.split_barcode(barcode)[1])
       else
-        @asset = Asset.find_by_barcode(barcode)
+        @asset = Asset.find_from_barcode(barcode)
       end
       
       if @asset.nil?
@@ -410,7 +413,7 @@ class AssetsController < ApplicationController
   
   def create_stocks
     params[:assets].each do |id, params|
-      asset = Asset.find(id)
+      asset = Asset.find_from_id(id)
       stock_asset = asset.create_stock_asset!(
         :name          => params[:name],
         :volume        => params[:volume],
@@ -440,7 +443,7 @@ class AssetsController < ApplicationController
 
   private
   def discover_asset
-    @asset = Asset.find(params[:id], :include => { :requests => :request_metadata })
+    @asset = Asset.find_from(params[:id], :include => { :requests => :request_metadata })
   end
 
   def check_valid_values(params = nil)
