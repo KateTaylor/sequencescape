@@ -216,11 +216,43 @@ class Asset < ActiveRecord::Base
 
   #todo unify with parent/children
   def parent
-    self.parents.first
+    classname =  self.sti_type.constantize
+    @asset = classname.find(self.id)
+    begin
+      @asset.parents.first
+    rescue NoMethodError
+      nil
+    end
+  end
+
+  def parents
+    classname =  self.sti_type.constantize
+    @asset = classname.find(self.id)
+    begin
+      @asset.parents
+    rescue NoMethodError
+      []
+    end
   end
 
   def child
-    self.children.last
+    classname =  self.sti_type.constantize
+    @asset = classname.find(self.id)
+    begin
+      @asset.child
+    rescue NoMethodError
+      nil
+    end
+  end
+
+  def children
+    classname =  self.sti_type.constantize
+    @asset = classname.find(self.id)
+    begin
+      @asset.children
+    rescue NoMethodError
+      []
+    end
   end
 
   def library_prep?
@@ -533,25 +565,85 @@ class Asset < ActiveRecord::Base
    self.resource == true
  end
 
-  def self.find_from
-    asset = Aliquot::Receptacle.find || Plate.find || Fragment.find
-  end
+ def self.find_from
+ begin
+     plate = Plate.find
+     rescue
+       begin
+         receptacle = Aliquot::Receptacle.find
+       rescue
+         begin
+           fragment = Fragment.find
+         rescue
+           raise ActiveRecord::RecordNotFound, "Couldn't find asset"
+         end
+       end
+     end
+ end
 
-  def self.find_from(*args)
-    asset = Aliquot::Receptacle.find(*args) || Plate.find(*args) || Fragment.find(*args)
-  end
+ def self.find_from(*args)
+   begin
+     plate = Plate.find(*args)
+     rescue
+       begin
+         receptacle = Aliquot::Receptacle.find(*args)
+       rescue
+         begin
+           fragment = Fragment.find(*args)
+         rescue
+           raise ActiveRecord::RecordNotFound, "Couldn't find asset from criteria"
+         end
+       end
+     end
+ end
 
-  def self.find_from_id(asset_id)
-    asset = Aliquot::Receptacle.find_by_id(asset_id) || Plate.find_by_id(asset_id) || Fragment.find_by_id(asset_id)
-  end
+ def self.find_from_id(asset_id)
+   begin
+     plate = Plate.find(asset_id)
+     rescue
+       begin
+         receptacle = Aliquot::Receptacle.find(asset_id)
+       rescue
+         begin
+           fragment = Fragment.find(asset_id)
+         rescue
+           raise ActiveRecord::RecordNotFound, "Couldn't find asset with id #{asset_id}"
+         end
+       end
+     end
+ end
 
-  def self.find_from_barcode(barcode)
-    asset = Aliquot::Receptacle.find_by_barcode(barcode) || Plate.find_by_barcode(barcode) || Fragment.find_by_barcode(barcode)
-  end
+ def self.find_from_barcode(barcode)
+ begin
+     plate = Plate.find(barcode)
+     rescue
+       begin
+         receptacle = Aliquot::Receptacle.find(barcode)
+       rescue
+         begin
+           fragment = Fragment.find(barcode)
+         rescue
+           raise ActiveRecord::RecordNotFound, "Couldn't find asset with barcode #{barcode}"
+         end
+       end
+     end
+ end
 
-  def self.find_from_name(name)
-    asset = Aliquot::Receptacle.find_by_name(name) || Plate.find_by_name(name) || Fragment.find_by_name(name)
-  end
+ def self.find_from_name(name)
+ begin
+     plate = Plate.find(name)
+     rescue
+       begin
+         receptacle = Aliquot::Receptacle.find(name)
+       rescue
+         begin
+           fragment = Fragment.find(name)
+         rescue
+           raise ActiveRecord::RecordNotFound, "Couldn't find asset with name #{name}"
+         end
+       end
+     end
+ end
 
   private
   def set_default_prefix

@@ -184,4 +184,7 @@ class Aliquot < ActiveRecord::Base
     a.zip(b).all?  { |x, y|  (x || y) == (y || x)  }
   end
 
+  def label
+    return 'Aliquot'
+  end
 end
