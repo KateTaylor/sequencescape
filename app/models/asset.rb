@@ -23,13 +23,12 @@ class Asset < ActiveRecord::Base
   end
 
   before_create :set_default_prefix
-  
+
   class_inheritable_accessor :prefix
   self.prefix = "NT"
   
   cattr_reader :per_page
   @@per_page = 500
-  self.inheritance_column = "sti_type"
   #acts_as_paranoid
 #  validates_uniqueness_of :name
 

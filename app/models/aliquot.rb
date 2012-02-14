@@ -12,6 +12,9 @@ class Aliquot < ActiveRecord::Base
     def default_state
       nil
     end
+  
+    self.abstract_class = false
+    self.inheritance_column = "sti_type"
 
     # A receptacle can hold many aliquots.  For example, a multiplexed library tube will contain more than
     # one aliquot.
