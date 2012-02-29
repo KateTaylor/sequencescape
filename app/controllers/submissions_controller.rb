@@ -10,8 +10,9 @@ class SubmissionsController < ApplicationController
     if @presenter.save
       render :partial => 'saved_order',
         :locals => {
-          :order => @presenter.order,
-          :form => :dummy_form_symbol
+          :presenter => @presenter,
+          :order     => @presenter.order,
+          :form      => :dummy_form_symbol
         },
         :layout => false
     else
@@ -49,6 +50,11 @@ class SubmissionsController < ApplicationController
 
   def show
     @presenter = SubmissionPresenter.new(current_user, :id => params[:id])
+  end
+
+ def study
+    @study       = Study.find(params[:id])
+    @submissions = @study.submissions
   end
 
   ###################################################               AJAX ROUTES

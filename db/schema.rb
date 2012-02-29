@@ -9,7 +9,42 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20120206113135) do
+ActiveRecord::Schema.define(:version => 2012012716103617) do
+
+  create_table "aliquot_receptacles", :id => false, :force => true do |t|
+    t.integer  "id",                                                                   :default => 0,     :null => false
+    t.string   "name"
+    t.string   "value"
+    t.text     "descriptors"
+    t.text     "descriptor_fields"
+    t.string   "sti_type",                :limit => 50
+    t.string   "barcode"
+    t.string   "qc_state",                :limit => 20
+    t.boolean  "resource"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.integer  "map_id"
+    t.integer  "size"
+    t.boolean  "closed",                                                               :default => false
+    t.string   "public_name"
+    t.boolean  "archive"
+    t.boolean  "external_release"
+    t.string   "two_dimensional_barcode"
+    t.integer  "plate_purpose_id"
+    t.decimal  "volume",                                :precision => 10, :scale => 2
+    t.integer  "barcode_prefix_id"
+    t.decimal  "concentration",                         :precision => 18, :scale => 8
+    t.integer  "legacy_sample_id"
+    t.integer  "legacy_tag_id"
+  end
+
+  add_index "aliquot_receptacles", ["barcode"], :name => "index_aliquot_receptacles_on_barcode"
+  add_index "aliquot_receptacles", ["barcode_prefix_id"], :name => "index_aliquot_receptacles_on_barcode_prefix_id"
+  add_index "aliquot_receptacles", ["legacy_sample_id"], :name => "index_aliquot_receptacles_on_sample_id"
+  add_index "aliquot_receptacles", ["map_id"], :name => "index_aliquot_receptacles_on_map_id"
+  add_index "aliquot_receptacles", ["sti_type", "updated_at"], :name => "index_aliquot_receptacles_on_sti_type_and_updated_at"
+  add_index "aliquot_receptacles", ["sti_type"], :name => "index_aliquot_receptacles_on_sti_type"
+  add_index "aliquot_receptacles", ["updated_at"], :name => "index_aliquot_receptacles_on_updated_at"
 
   create_table "aliquots", :force => true do |t|
     t.integer  "receptacle_id",    :null => false
@@ -83,7 +118,8 @@ ActiveRecord::Schema.define(:version => 20120206113135) do
   add_index "asset_links", ["descendant_id", "direct"], :name => "index_asset_links_on_descendant_id_and_direct"
   add_index "asset_links", ["descendant_id"], :name => "index_asset_links_on_descendant_id"
 
-  create_table "assets", :force => true do |t|
+  create_table "assets", :id => false, :force => true do |t|
+    t.integer  "id",                                                                   :default => 0, :null => false
     t.string   "name"
     t.string   "value"
     t.text     "descriptors"
@@ -91,15 +127,15 @@ ActiveRecord::Schema.define(:version => 20120206113135) do
     t.string   "sti_type",                :limit => 50
     t.string   "barcode"
     t.string   "qc_state",                :limit => 20
-    t.boolean  "resource"
+    t.integer  "resource",                :limit => 1
     t.datetime "created_at"
     t.datetime "updated_at"
     t.integer  "map_id"
     t.integer  "size"
-    t.boolean  "closed",                                                               :default => false
+    t.integer  "closed",                  :limit => 1
     t.string   "public_name"
-    t.boolean  "archive"
-    t.boolean  "external_release"
+    t.integer  "archive",                 :limit => 1
+    t.integer  "external_release",        :limit => 1
     t.string   "two_dimensional_barcode"
     t.integer  "plate_purpose_id"
     t.decimal  "volume",                                :precision => 10, :scale => 2
@@ -108,14 +144,6 @@ ActiveRecord::Schema.define(:version => 20120206113135) do
     t.integer  "legacy_sample_id"
     t.integer  "legacy_tag_id"
   end
-
-  add_index "assets", ["barcode"], :name => "index_assets_on_barcode"
-  add_index "assets", ["barcode_prefix_id"], :name => "index_assets_on_barcode_prefix_id"
-  add_index "assets", ["legacy_sample_id"], :name => "index_assets_on_sample_id"
-  add_index "assets", ["map_id"], :name => "index_assets_on_map_id"
-  add_index "assets", ["sti_type", "updated_at"], :name => "index_assets_on_sti_type_and_updated_at"
-  add_index "assets", ["sti_type"], :name => "index_assets_on_sti_type"
-  add_index "assets", ["updated_at"], :name => "index_assets_on_updated_at"
 
   create_table "attachments", :force => true do |t|
     t.integer "pipeline_workflow_id"
@@ -206,7 +234,6 @@ ActiveRecord::Schema.define(:version => 20120206113135) do
 
   add_index "batch_requests", ["batch_id"], :name => "index_batch_requests_on_batch_id"
   add_index "batch_requests", ["request_id"], :name => "index_batch_requests_on_request_id"
-  add_index "batch_requests", ["request_id"], :name => "request_id", :unique => true
   add_index "batch_requests", ["updated_at"], :name => "index_batch_requests_on_updated_at"
 
   create_table "batches", :force => true do |t|
@@ -412,6 +439,75 @@ ActiveRecord::Schema.define(:version => 20120206113135) do
     t.integer "pipeline_workflow_id"
   end
 
+  create_table "fragments", :id => false, :force => true do |t|
+    t.integer  "id",                                                                   :default => 0,     :null => false
+    t.string   "name"
+    t.string   "value"
+    t.text     "descriptors"
+    t.text     "descriptor_fields"
+    t.string   "sti_type",                :limit => 50
+    t.string   "barcode"
+    t.string   "qc_state",                :limit => 20
+    t.boolean  "resource"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.integer  "map_id"
+    t.integer  "size"
+    t.boolean  "closed",                                                               :default => false
+    t.string   "public_name"
+    t.boolean  "archive"
+    t.boolean  "external_release"
+    t.string   "two_dimensional_barcode"
+    t.integer  "plate_purpose_id"
+    t.decimal  "volume",                                :precision => 10, :scale => 2
+    t.integer  "barcode_prefix_id"
+    t.decimal  "concentration",                         :precision => 18, :scale => 8
+    t.integer  "legacy_sample_id"
+    t.integer  "legacy_tag_id"
+  end
+
+  add_index "fragments", ["barcode"], :name => "index_fragments_on_barcode"
+  add_index "fragments", ["barcode_prefix_id"], :name => "index_fragments_on_barcode_prefix_id"
+  add_index "fragments", ["legacy_sample_id"], :name => "index_fragments_on_sample_id"
+  add_index "fragments", ["map_id"], :name => "index_fragments_on_map_id"
+  add_index "fragments", ["sti_type", "updated_at"], :name => "index_fragments_on_sti_type_and_updated_at"
+  add_index "fragments", ["sti_type"], :name => "index_fragments_on_sti_type"
+  add_index "fragments", ["updated_at"], :name => "index_fragments_on_updated_at"
+
+  create_table "hidden_assets", :force => true do |t|
+    t.string   "name"
+    t.string   "value"
+    t.text     "descriptors"
+    t.text     "descriptor_fields"
+    t.string   "sti_type",                :limit => 50
+    t.string   "barcode"
+    t.string   "qc_state",                :limit => 20
+    t.boolean  "resource"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.integer  "map_id"
+    t.integer  "size"
+    t.boolean  "closed",                                                               :default => false
+    t.string   "public_name"
+    t.boolean  "archive"
+    t.boolean  "external_release"
+    t.string   "two_dimensional_barcode"
+    t.integer  "plate_purpose_id"
+    t.decimal  "volume",                                :precision => 10, :scale => 2
+    t.integer  "barcode_prefix_id"
+    t.decimal  "concentration",                         :precision => 18, :scale => 8
+    t.integer  "legacy_sample_id"
+    t.integer  "legacy_tag_id"
+  end
+
+  add_index "hidden_assets", ["barcode"], :name => "index_assets_on_barcode"
+  add_index "hidden_assets", ["barcode_prefix_id"], :name => "index_assets_on_barcode_prefix_id"
+  add_index "hidden_assets", ["legacy_sample_id"], :name => "index_assets_on_sample_id"
+  add_index "hidden_assets", ["map_id"], :name => "index_assets_on_map_id"
+  add_index "hidden_assets", ["sti_type", "updated_at"], :name => "index_assets_on_sti_type_and_updated_at"
+  add_index "hidden_assets", ["sti_type"], :name => "index_assets_on_sti_type"
+  add_index "hidden_assets", ["updated_at"], :name => "index_assets_on_updated_at"
+
   create_table "identifiers", :force => true do |t|
     t.integer "identifiable_id"
     t.string  "identifiable_type", :limit => 50
@@ -515,7 +611,7 @@ ActiveRecord::Schema.define(:version => 20120206113135) do
   add_index "maps", ["description"], :name => "index_maps_on_description"
 
   create_table "orders", :force => true do |t|
-    t.integer  "study_id"
+    t.integer  "study_id",                        :null => false
     t.integer  "workflow_id"
     t.datetime "created_at"
     t.datetime "updated_at"
@@ -526,7 +622,7 @@ ActiveRecord::Schema.define(:version => 20120206113135) do
     t.text     "request_types"
     t.text     "request_options"
     t.text     "comments"
-    t.integer  "project_id"
+    t.integer  "project_id",                      :null => false
     t.string   "sti_type"
     t.string   "template_name"
     t.integer  "asset_group_id"
@@ -534,6 +630,7 @@ ActiveRecord::Schema.define(:version => 20120206113135) do
     t.integer  "submission_id"
   end
 
+  add_index "orders", ["project_id"], :name => "fk_orders_on_project_id"
   add_index "orders", ["state_to_delete"], :name => "index_submissions_on_state"
   add_index "orders", ["study_id"], :name => "index_submissions_on_project_id"
 
@@ -659,6 +756,41 @@ ActiveRecord::Schema.define(:version => 20120206113135) do
   end
 
   add_index "plate_volumes", ["uploaded_file_name"], :name => "index_plate_volumes_on_uploaded_file_name"
+
+  create_table "plates", :id => false, :force => true do |t|
+    t.integer  "id",                                                                   :default => 0,     :null => false
+    t.string   "name"
+    t.string   "value"
+    t.text     "descriptors"
+    t.text     "descriptor_fields"
+    t.string   "sti_type",                :limit => 50
+    t.string   "barcode"
+    t.string   "qc_state",                :limit => 20
+    t.boolean  "resource"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.integer  "map_id"
+    t.integer  "size"
+    t.boolean  "closed",                                                               :default => false
+    t.string   "public_name"
+    t.boolean  "archive"
+    t.boolean  "external_release"
+    t.string   "two_dimensional_barcode"
+    t.integer  "plate_purpose_id"
+    t.decimal  "volume",                                :precision => 10, :scale => 2
+    t.integer  "barcode_prefix_id"
+    t.decimal  "concentration",                         :precision => 18, :scale => 8
+    t.integer  "legacy_sample_id"
+    t.integer  "legacy_tag_id"
+  end
+
+  add_index "plates", ["barcode"], :name => "index_plates_on_barcode"
+  add_index "plates", ["barcode_prefix_id"], :name => "index_plates_on_barcode_prefix_id"
+  add_index "plates", ["legacy_sample_id"], :name => "index_plates_on_sample_id"
+  add_index "plates", ["map_id"], :name => "index_plates_on_map_id"
+  add_index "plates", ["sti_type", "updated_at"], :name => "index_plates_on_sti_type_and_updated_at"
+  add_index "plates", ["sti_type"], :name => "index_plates_on_sti_type"
+  add_index "plates", ["updated_at"], :name => "index_plates_on_updated_at"
 
   create_table "project_managers", :force => true do |t|
     t.string   "name"
@@ -1077,8 +1209,8 @@ ActiveRecord::Schema.define(:version => 20120206113135) do
   add_index "study_reports", ["user_id"], :name => "index_study_reports_on_user_id"
 
   create_table "study_samples", :force => true do |t|
-    t.integer "study_id"
-    t.integer "sample_id"
+    t.integer "study_id",  :null => false
+    t.integer "sample_id", :null => false
   end
 
   add_index "study_samples", ["sample_id"], :name => "index_project_samples_on_sample_id"
