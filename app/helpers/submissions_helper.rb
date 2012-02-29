@@ -36,7 +36,7 @@ module SubmissionsHelper
   def order_text_tag(order, field_info)
     text_field_tag(
       "submission[order_params][#{field_info.key}]",
-      order.request_options.try(:[], field_info.key),
+      order.request_options.try(:[], field_info.key) || field_info.default_value,
       :class => "required"
     )
   end
@@ -90,7 +90,7 @@ module SubmissionsHelper
     when 'failed' then
       h('<h2>Your submission has failed:</h2>' + "<p>#{submission.message}</p>")
     when 'ready'
-      content_tag(:p, h('Your submission has been <strong>processed</strong>.'))
+      content_tag(:p, 'Your submission has been <strong>processed</strong>.')
     else 
       content_tag(:p, 'Your submission is in an unknown state (contact support).')
     end 
@@ -98,5 +98,13 @@ module SubmissionsHelper
 
   def order_sample_names(order)
     order.assets.map(&:aliquots).flatten.map(&:sample).map(&:name).join(', ')
+  end
+
+  def request_description(presenter, request_type)
+    request_type_name = request_type.name.titleize
+
+    return request_type_name unless request_type.request_class_name =~ /SequencingRequest$/
+
+    content_tag(:em, pluralize(presenter.lanes_of_sequencing, 'Lane') + ' of ') + request_type_name
   end
 end
