@@ -16,16 +16,6 @@ Factory.sequence :asset_name do |n|
   "Asset #{n}"
 end
 
-
-Factory.define :asset do |a|
-  a.name                {|a| Factory.next :asset_name }
-  a.value               ""
-  a.qc_state            ""
-  a.resource            nil
-  a.barcode             {|a| Factory.next :barcode_number }
-  a.barcode_prefix      {|b| b.association(:barcode_prefix)}
-end
-
 Factory.define :plate do |a|
   a.plate_purpose { |_| PlatePurpose.find_by_name('Stock plate') }
   a.name                "Plate name"

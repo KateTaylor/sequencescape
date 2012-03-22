@@ -121,6 +121,7 @@ Factory.define :budget_division do |bd|
 end
 
 Factory.define :project_metadata, :class => Project::Metadata do |m|
+  m.project_id {|project| project.association(:project)}
   m.project_cost_code 'Some Cost Code'
   m.budget_division {|budget| budget.association(:budget_division)} 
 end
