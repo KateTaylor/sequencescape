@@ -46,14 +46,27 @@ class PlatePurpose < ActiveRecord::Base
   # all of the TransferRequest instances to the state specified.  If contents is blank then the change is assumed to 
   # relate to all wells of the plate, otherwise only the selected ones are updated.
   def transition_to(plate, state, contents = nil)
-    contents ||= []
-    plate.transfer_requests.each do |request|
-      request.update_attributes!(:state => state) if contents.empty? or contents.include?(request.target_asset.map.description)
+    wells = plate.wells
+    wells = wells.located_at(contents) unless contents.blank?
+
+    well_to_requests = wells.map { |well| [well, well.requests_as_target] }.reject { |_,r| r.empty? }
+    Request.update_all("state=#{state.inspect}", [ 'id IN (?)', well_to_requests.map(&:last).flatten ])
+    return unless state == 'failed'
+
+    # Load all of the requests that come from the stock wells that should be failed.  Note that we can't simply change
+    # their state, we have to actually use the statemachine method to do this to get the correct behaviour.
+    conditions, parameters = [], []
+    well_to_requests.each do |well, requests|
+      submission_ids, stock_wells = requests.map(&:submission_id), well.stock_wells.map(&:id)
+      next if stock_wells.empty?
+      conditions << '(submission_id IN (?) AND asset_id IN (?))'
+      parameters.concat([ submission_ids, stock_wells ])
     end
+    Request.where_is_not_a?(TransferRequest).all(:conditions => [ "(#{conditions.join(' OR ')})", *parameters ]).map(&:fail!)
   end
 
   def pool_wells(wells)
-    _pool_wells(wells).all(:select => 'assets.*, submission_id AS pool_id').tap do |wells_with_pool|
+    _pool_wells(wells).all(:select => 'assets.*, submission_id AS pool_id', :readonly => false).tap do |wells_with_pool|
       raise StandardError, "Cannot deal with a well in multiple pools" if wells_with_pool.group_by(&:id).any? { |_, multiple_pools| multiple_pools.uniq.size > 1 }
     end
   end

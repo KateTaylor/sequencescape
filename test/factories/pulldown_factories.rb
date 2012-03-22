@@ -54,6 +54,10 @@ Factory.define(:transfer_template) do |transfer_template|
   transfer_template.transfers('A1' => 'A1', 'B1' => 'B1')
 end
 
+Factory.define(:pooling_transfer_template, :class => TransferTemplate) do |transfer_template|
+  transfer_template.transfer_class_name 'Transfer::BetweenPlatesBySubmission'
+end
+
 # A tag group that works for the tag layouts
 Factory.sequence(:tag_group_for_layout_name) { |n| "Tag group #{n}" }
 Factory.define(:tag_group_for_layout, :class => TagGroup) do |tag_group|
@@ -109,5 +113,44 @@ Factory.define(:plate_creation) do |plate_creation|
   plate_creation.after_build do |plate_creation|
     plate_creation.parent.plate_purpose = PlatePurpose.find_by_name('Parent plate purpose') || Factory(:parent_plate_purpose)
     plate_creation.child_plate_purpose  = PlatePurpose.find_by_name('Child plate purpose')  || Factory(:child_plate_purpose)
+  end
+end
+
+Factory.define(:bait_library_supplier, :class => BaitLibrary::Supplier) do |supplier|
+  supplier.name 'bait library supplier'
+end
+Factory.define(:bait_library) do |bait_library|
+  bait_library.bait_library_supplier { |target| target.association(:bait_library_supplier) }
+  bait_library.name 'bait library!'
+  bait_library.target_species 'Human'
+end
+
+Factory.define(:pulldown_wgs_request, :class => Pulldown::Requests::WgsLibraryRequest) do |request|
+  request.request_type { |target| RequestType.find_by_name('Pulldown WGS') or raise StandardError, "Could not find 'Pulldown WGS' request type" }
+  request.asset        { |target| target.association(:well_with_sample_and_plate) }
+  request.target_asset { |target| target.association(:empty_well) }
+  request.after_build do |request|
+    request.request_metadata.fragment_size_required_from = 300
+    request.request_metadata.fragment_size_required_to   = 500
+  end
+end
+Factory.define(:pulldown_sc_request, :class => Pulldown::Requests::ScLibraryRequest) do |request|
+  request.request_type { |target| RequestType.find_by_name('Pulldown SC') or raise StandardError, "Could not find 'Pulldown SC' request type" }
+  request.asset        { |target| target.association(:well_with_sample_and_plate) }
+  request.target_asset { |target| target.association(:empty_well) }
+  request.after_build do |request|
+    request.request_metadata.fragment_size_required_from = 100
+    request.request_metadata.fragment_size_required_to   = 400
+    request.request_metadata.bait_library                = Factory(:bait_library)
+  end
+end
+Factory.define(:pulldown_isc_request, :class => Pulldown::Requests::IscLibraryRequest) do |request|
+  request.request_type { |target| RequestType.find_by_name('Pulldown ISC') or raise StandardError, "Could not find 'Pulldown ISC' request type" }
+  request.asset        { |target| target.association(:well_with_sample_and_plate) }
+  request.target_asset { |target| target.association(:empty_well) }
+  request.after_build do |request|
+    request.request_metadata.fragment_size_required_from = 100
+    request.request_metadata.fragment_size_required_to   = 400
+    request.request_metadata.bait_library                = Factory(:bait_library)
   end
 end

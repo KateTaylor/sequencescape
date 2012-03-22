@@ -36,6 +36,7 @@ class Request < ActiveRecord::Base
   has_many :quotas, :through => :request_quotas
 
   belongs_to :request_type
+  delegate :billable?, :to => :request_type, :allow_nil => true
   belongs_to :workflow, :class_name => "Submission::Workflow"
 
   belongs_to :user
@@ -135,6 +136,7 @@ class Request < ActiveRecord::Base
   named_scope :ordered_for_ungrouped_inbox, :order => 'id DESC'
   named_scope :ordered_for_submission_grouped_inbox, :order => 'submission_id DESC, id ASC'
 
+  named_scope :for_submission_id, lambda { |id| { :conditions => { :submission_id => id } } }
   named_scope :for_asset_id, lambda { |id| { :conditions => { :asset_id => id } } }
   named_scope :for_study_ids, lambda { |ids|
     {
