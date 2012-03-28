@@ -9,11 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-<<<<<<< HEAD
-ActiveRecord::Schema.define(:version => 20111206152534) do
-=======
 ActiveRecord::Schema.define(:version => 2012012716103617) do
->>>>>>> e079013... Use orders.study_id not order_metatdata, use existing Example study and sample rather than new dummy data
 
   create_table "aliquots", :force => true do |t|
     t.integer  "receptacle_id",    :null => false
