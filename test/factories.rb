@@ -221,6 +221,7 @@ Factory.define :request_with_submission, :class => Request do |request|
     next if request.request_type.nil?
     request.request_metadata = Factory.build(:"request_metadata_for_#{request.request_type.name.downcase.gsub(/[^a-z]+/, '_')}") if request.request_metadata.new_record?
     request.sti_type = request.request_type.request_class_name
+    request.initial_project = Factory(:project)
   end
 
   # We use after_create so this is called after the after_build of derived class
