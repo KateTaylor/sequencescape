@@ -120,18 +120,19 @@ Factory.define :budget_division do |bd|
  bd.name { |a| Factory.next :budget_division_name }   
 end
 
-Factory.define :project_metadata, :class => Project::Metadata do |m|
-  m.project_cost_code 'Some Cost Code'
-  m.budget_division {|budget| budget.association(:budget_division)} 
-end
-
 Factory.define :project do |p|
   p.name                { |p| Factory.next :project_name }
   p.enforce_quotas      false
   p.approved            true
   p.state               "active"
 
-  p.after_build { |project| project.project_metadata = Factory(:project_metadata, :project => project) }
+end
+
+Factory.define :project_metadata, :class => Project::Metadata do |m|
+  m.project_cost_code 'Some Cost Code'
+  m.budget_division {|budget| budget.association(:budget_division)} 
+
+  m.after_build { |project_metadata| project_metadata.project = Factory(:project) }
 end
 
 Factory.define :project_with_order , :parent => :project do |p|
