@@ -241,12 +241,14 @@ end
 #Factory.define :request_without_assets, :class => Request do |request|
 Factory.define :request_without_assets, :parent => :request_with_submission do |request|
   request.item              {|item|       item.association(:item)}
-  request.project           {|pr|         pr.association(:project)}
+  #request.project           {|pr|         pr.association(:project)}
   request.request_type      {|rt|         rt.association(:request_type)}
   request.state             'pending'     
   request.study             {|study|      study.association(:study)}
   request.user              {|user|       user.association(:user)}
   request.workflow          {|workflow|   workflow.association(:submission_workflow)}
+
+  request.after_build {|request| request.project = Factory(:project) }
 end
 
 Factory.define :request, :parent => :request_without_assets do |request|
