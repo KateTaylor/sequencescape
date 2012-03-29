@@ -121,6 +121,7 @@ Factory.define :budget_division do |bd|
 end
 
 Factory.define :project do |p|
+
   p.name                { |p| Factory.next :project_name }
   p.enforce_quotas      false
   p.approved            true
@@ -221,12 +222,7 @@ Factory.define :request_with_submission, :class => Request do |request|
     next if request.request_type.nil?
     request.request_metadata = Factory.build(:"request_metadata_for_#{request.request_type.name.downcase.gsub(/[^a-z]+/, '_')}") if request.request_metadata.new_record?
     request.sti_type = request.request_type.request_class_name
-    request.initial_project = Factory(:project)
-  end
-
-  # We use after_create so this is called after the after_build of derived class
-  # That leave a chance to children factory to build asset beforehand
-  request.after_build do |request|
+    request.initial_project.project_metadata = Factory(:project_metadata)
     request.submission = Factory::submission(
       :workflow => request.workflow,
       :study => request.initial_study,
@@ -249,7 +245,7 @@ Factory.define :request_without_assets, :parent => :request_with_submission do |
   request.user              {|user|       user.association(:user)}
   request.workflow          {|workflow|   workflow.association(:submission_workflow)}
 
-  request.after_build {|request| request.project = Factory(:project) }
+  request.after_build {|request| request.initial_project = Factory(:project) }
 end
 
 Factory.define :request, :parent => :request_without_assets do |request|
@@ -265,18 +261,18 @@ end
 
 Factory.define :request_without_item, :class => "Request" do |r|
   r.study         {|pr| pr.association(:study)}
-  r.project         {|pr| pr.association(:project)}
+  #r.project         {|pr| pr.association(:project)}
   r.user            {|user|     user.association(:user)}
   r.request_type    {|request_type| request_type.association(:request_type)}
   r.workflow        {|workflow| workflow.association(:submission_workflow)}
   r.state           'pending'
-  r.after_build { |request| request.submission = Factory::submission(:study => request.initial_study,
-                                                                           :project => request.initial_project,
-                                                                           :user => request.user,
-                                                                           :request_types => [request.request_type.id.to_s],
-                                                                           :workflow => request.workflow
-
-                                                                          )
+  r.after_build { |request| request.intial_project = Factory(:project)
+                            request.submission = Factory::submission(:study => request.initial_study,
+                                                                     :project => request.project,
+                                                                     :user => request.user,
+                                                                     :request_types => [request.request_type.id.to_s],
+                                                                     :workflow => request.workflow
+                                                                     )
   }
 end
 
