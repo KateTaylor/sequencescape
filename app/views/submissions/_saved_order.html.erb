@@ -29,29 +29,33 @@
     <h4>There are no assets in this order, it maybe damaged!</h4>
   <% end -%>
 
-  <%= "<p>#{order.comments}</p>" unless order.comments.nil? %>
-
   <% unless order.request_types.blank? %>
     <h4>Request types:</h4>
     <ul id="request_types_for_submission">
       <% RequestType.find(order.request_types).each do |request_type| %>
-        <li><%= request_type.name %></li>
+        <li><%= request_description(presenter, request_type) %></li>
       <% end %>
     </ul>
   <% end %>
+
+  <h4>Comments:</h4>
+  <div class="sub-panel">
+    <%= "<p><i>#{order.comments}</i></p>" unless order.comments.nil? %>
+  </div>
 
   <% if form.present? -%>
     <div class="save-buttons">
       <%= hidden_field_tag :order_id,
         order.id,
-        :class => 'order-id' %>
+        :class => 'order-id' 
+      %>
 
-      <%= submit_tag "♻  Delete Order",
-        :class    => "delete-order button"
+      <%= submit_tag '♻  Delete Order',
+        :class => 'delete-order button'
       %>
     </div>
   <% end -%>
 
 <script type="text/javascript">
-  SCAPE.submission.id = <%= @presenter.submission.id %>;
+  SCAPE.submission.id = <%= presenter.submission.id %>;
 </script>
