@@ -124,6 +124,8 @@ Factory.define :project_metadata, :class => Project::Metadata do |m|
   m.project_id -1
   m.project_cost_code 'Some Cost Code'
   m.budget_division {|budget| budget.association(:budget_division)} 
+
+  m.after_build { |project_metadata| project_metadata.project_id = Factory(:project).project_id  if project_metadata.project.new_record?}
 end
 
 Factory.define :project do |p|
@@ -132,8 +134,7 @@ Factory.define :project do |p|
   p.approved            true
   p.state               "active"
 
-  p.after_build { |project| project.project_metadata = Factory(:project_metadata, :project => project) }
-
+  p.after_build { |project| project.project_metadata = Factory(:project_metadata, :project => project) if project.project_metadata.new_record?}
 end
 
 Factory.define :project_with_order , :parent => :project do |p|
@@ -221,7 +222,6 @@ Factory.define :request_with_submission, :class => Request do |request|
   request.after_build do |request|
     next if request.request_type.nil?
     request.request_metadata = Factory.build(:"request_metadata_for_#{request.request_type.name.downcase.gsub(/[^a-z]+/, '_')}") if request.request_metadata.new_record?
-    #debugger
     request.initial_project = Factory(:project_metadata).project
     request.sti_type = request.request_type.request_class_name
   end
@@ -229,6 +229,7 @@ Factory.define :request_with_submission, :class => Request do |request|
   # We use after_create so this is called after the after_build of derived class
   # That leave a chance to children factory to build asset beforehand
   request.after_build do |request|
+    debugger
     request.submission = Factory::submission(
       :workflow => request.workflow,
       :study => request.initial_study,
