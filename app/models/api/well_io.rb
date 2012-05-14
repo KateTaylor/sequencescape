@@ -10,7 +10,7 @@ class Api::WellIO < Api::Base
       base.class_eval do
         extend ClassMethods
 
-        named_scope :including_associations_for_json, { :include => [:uuid_object, :map, :well_attribute, :container, { :aliquots => { :sample => :uuid_object } } ] }
+        named_scope :including_associations_for_json, { :include => [:uuid_object, :map, :well_attribute, :plate, { :primary_aliquot => { :sample => :uuid_object } } ] }
       end
     end
   end
@@ -19,6 +19,7 @@ class Api::WellIO < Api::Base
   map_attribute_to_json_attribute(:uuid)
   map_attribute_to_json_attribute(:id, 'internal_id')
   map_attribute_to_json_attribute(:name)
+  map_attribute_to_json_attribute(:display_name)
   map_attribute_to_json_attribute(:created_at)
   map_attribute_to_json_attribute(:updated_at)
 

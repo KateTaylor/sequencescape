@@ -27,18 +27,20 @@ module Request::Statemachine
 
       # State Machine events
       aasm_event :start do
-        transitions :to => :started, :from => [:pending, :started, :hold]
+        transitions :to => :started, :from => [:pending, :hold]
       end
 
       aasm_event :pass do
-        transitions :to => :passed, :from => [:passed, :pending]
-        transitions :to => :passed, :from => [:started, :failed], :on_transition => :charge_to_project
+        transitions :to => :passed, :from => [:started], :on_transition => :charge_to_project
       end
 
       aasm_event :fail do
-        transitions :to => :failed, :from => [:pending, :failed]
         transitions :to => :failed, :from => [:started], :on_transition => :charge_internally
+      end
+
+      aasm_event :change_decision do
         transitions :to => :failed, :from => [:passed],  :on_transition => :refund_project
+        transitions :to => :passed, :from => [:failed], :on_transition => :charge_to_project
       end
 
       aasm_event :block do
@@ -50,15 +52,31 @@ module Request::Statemachine
       end
 
       aasm_event :detach do
-        transitions :to => :pending, :from => [:cancelled, :started, :pending]
+        transitions :to => :pending, :from => [:cancelled]
       end
 
       aasm_event :reset do
-        transitions :to => :pending, :from => [:started, :pending, :passed, :failed, :hold]
+        transitions :to => :pending, :from => [:hold]
       end
 
       aasm_event :cancel do
-        transitions :to => :cancelled, :from => [:started, :pending, :passed, :failed, :hold]
+        transitions :to => :cancelled, :from => [:started, :hold]
+      end
+
+      aasm_event :return do
+        transitions :to => :pending, :from => [:failed, :passed]
+      end
+
+      aasm_event :cancel_completed do
+        transitions :to => :cancelled, :from => [:failed, :passed]
+      end
+
+      aasm_event :cancel_from_upstream do
+        transitions :to => :cancelled, :from => [:pending]
+      end
+
+      aasm_event :cancel_before_started do
+        transitions :to => :cancelled, :from => [:pending]
       end
 
       after_save :release_unneeded_quotas!
@@ -90,13 +108,13 @@ module Request::Statemachine
   # super in any method that you override so that they can be stacked.
   #++
 
-  # On starting a request the aliquots are copied from the source asset to the target 
+  # On starting a request the aliquots are copied from the source asset to the target
   # and updated with the project and study information from the request itself.
   def on_started
     target_asset.aliquots << asset.aliquots.map do |aliquot|
       aliquot.clone.tap do |clone|
-        clone.study   = initial_study || aliquot.study
-        clone.project = initial_project || aliquot.project
+        clone.study_id   = initial_study_id   || aliquot.study_id
+        clone.project_id = initial_project_id || aliquot.project_id
       end
     end
   end

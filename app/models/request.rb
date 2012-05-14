@@ -8,7 +8,6 @@ class Request < ActiveRecord::Base
 
   include Uuid::Uuidable
   include AASM
-  include AasmExtensions
   include Commentable
   include Proxyable
   include StandardNamedScopes
@@ -51,12 +50,12 @@ class Request < ActiveRecord::Base
     raise RuntimeError, "Initial project already set" if initial_project_id
     self.initial_project_id = project_id
 
-    
+
     #use quota if neeed
     #we can't use quota now, because if we are building the request, the request type might
-    # haven't been assigned yet. 
+    # haven't been assigned yet.
     # We use in instance variable instead and book the request in a before_save callback
-    # 
+    #
     @orders_to_book = self.initial_project.orders
     book_quotas unless new_record?
     #self.initial_project.orders.each { |o| o.use_quota!(self, o.assets.present?) }
@@ -98,7 +97,7 @@ class Request < ActiveRecord::Base
   # TODO: Really need to be consistent in who our named scopes behave
   named_scope :request_type, lambda { |request_type|
     id =
-      case 
+      case
       when request_type.nil? then nil   # TODO: Are the pipelines with nil request_type_id really nil?
       when request_type.is_a?(Fixnum), request_type.is_a?(String) then request_type
       else request_type.id
@@ -123,8 +122,16 @@ class Request < ActiveRecord::Base
   #Use container location
   named_scope :holder_located, lambda { |location_id|
     {
-      :joins => ["INNER JOIN container_associations ON content_id = asset_id", "INNER JOIN location_associations ON location_associations.locatable_id = container_id"],
-      :conditions => ['location_associations.location_id = ?', location_id ] 
+      :joins => ["INNER JOIN container_associations hl ON hl.content_id = asset_id", "INNER JOIN location_associations ON location_associations.locatable_id = hl.container_id"],
+      :conditions => ['location_associations.location_id = ?', location_id ],
+      :readonly => false
+    }
+  }
+  named_scope :holder_not_control, lambda {
+    {
+      :joins => ["INNER JOIN container_associations hncca ON hncca.content_id = asset_id", "INNER JOIN assets AS hncc ON hncc.id = hncca.container_id"],
+      :conditions => ['hncc.sti_type != ?', 'ControlPlate' ],
+      :readonly => false
     }
   }
   named_scope :without_asset, :conditions =>  'asset_id is null'
@@ -133,8 +140,22 @@ class Request < ActiveRecord::Base
   named_scope :full_inbox, :conditions => {:state => ["pending","hold"]}
   named_scope :hold, :conditions => {:state => "hold"}
 
+  named_scope :loaded_for_inbox_display, :include => [:comments, {:submission => {:orders =>:study}, :asset => [:scanned_into_lab_event,:comments,:studies]}]
   named_scope :ordered_for_ungrouped_inbox, :order => 'id DESC'
   named_scope :ordered_for_submission_grouped_inbox, :order => 'submission_id DESC, id ASC'
+
+  named_scope :group_conditions, lambda { |conditions, variables| {
+    :conditions => [ conditions.join(' OR '), *variables ]
+  } }
+  def self.group_requests(finder_method, options = {})
+    target = options[:by_target] ? 'target_asset_id' : 'asset_id'
+
+    send(finder_method, options.slice(:group).merge(
+      :select  => "requests.*, tca.container_id AS container_id, tca.content_id AS content_id",
+      :joins   => "INNER JOIN container_associations tca ON tca.content_id=#{target}",
+      :include => :request_metadata
+    ))
+  end
 
   named_scope :for_submission_id, lambda { |id| { :conditions => { :submission_id => id } } }
   named_scope :for_asset_id, lambda { |id| { :conditions => { :asset_id => id } } }
@@ -143,7 +164,7 @@ class Request < ActiveRecord::Base
       :joins =>  %Q(
       INNER JOIN (assets AS a, aliquots AS al)
        ON (requests.asset_id = a.id
-           AND  al.receptacle_id = a.id 
+           AND  al.receptacle_id = a.id
            AND al.study_id IN (#{ids.join(", ")}))
              ),
        :group => "requests.id"
@@ -176,13 +197,16 @@ class Request < ActiveRecord::Base
 
   named_scope :for_workflow, lambda { |workflow| { :joins => :workflow, :conditions => { :workflow => { :key => workflow } } } }
   named_scope :for_request_types, lambda { |types| { :joins => :request_type, :conditions => { :request_types => { :key => types } } } }
-  
+
   named_scope :for_search_query, lambda { |query|
     { :conditions => [ 'id=?', query ] }
   }
 
   named_scope :find_all_target_asset, lambda { |target_asset_id| { :conditions => [ 'target_asset_id = ?', "#{target_asset_id}" ] } }
   named_scope :for_studies, lambda { |*studies| { :conditions => { :initial_study_id => studies.map(&:id) } } }
+
+  named_scope :with_assets_for_starting_requests, :include => [:request_metadata,{:asset=>:aliquots,:target_asset=>:aliquots}]
+  named_scope :not_failed, :conditions => ['state != ?', 'failed']
 
   #------
   #TODO: use eager loading association
@@ -316,7 +340,7 @@ class Request < ActiveRecord::Base
   def copy
     RequestFactory.copy_request(self)
   end
-  
+
   def cancelable?
     self.batch_request.nil? && (pending? || blocked?)
   end
@@ -327,10 +351,10 @@ class Request < ActiveRecord::Base
       request.update_attributes!(:priority => priority)
     end
   end
-  
+
   def request_type_updatable?(new_request_type)
     return false unless self.pending?
-    request_type = RequestType.find(new_request_type) 
+    request_type = RequestType.find(new_request_type)
     return true if self.request_type_id == request_type.id
     self.has_quota?(1)
   end
@@ -340,7 +364,7 @@ class Request < ActiveRecord::Base
     # TODO[xxx]: Until we know exactly what to do with these they live here.
     # These are the metadata attributes that are updated by events.  As far as I am aware none of these
     # are actually displayed anywhere, so I'm not entirely sure why they exist at all.
-    # 
+    #
     # TODO[xxx]: Actually we have to completely hide these otherwise the various request views are broken.
 #    attribute(:batch_id)
 #    attribute(:pipeline_id)

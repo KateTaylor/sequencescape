@@ -34,6 +34,8 @@ class Well < Aliquot::Receptacle
   }
   named_scope :in_column_major_order, { :joins => :map, :order => 'column_order ASC' }
   named_scope :in_row_major_order, { :joins => :map, :order => 'row_order ASC' }
+  named_scope :in_inverse_column_major_order, { :joins => :map, :order => 'column_order DESC' }
+  named_scope :in_inverse_row_major_order, { :joins => :map, :order => 'row_order DESC' }
 
   after_create :create_well_attribute_if_not_exists
 
@@ -146,19 +148,6 @@ class Well < Aliquot::Receptacle
     return false unless map.description.is_a?(String)
 
     true
-  end
-  
-  def set_buffer_required(requested_volume, minimum_volume)
-    if requested_volume < minimum_volume
-      set_buffer_volume(calculate_buffer_required(minimum_volume, requested_volume))
-    else
-      set_buffer_volume(0.0)
-    end
-  end
-  
-  def calculate_buffer_required(total_volume, requested_volume)
-    buffer_volume = (total_volume*100 - requested_volume*100)
-    (buffer_volume.to_i.to_f)/100
   end
 
   def create_child_sample_tube

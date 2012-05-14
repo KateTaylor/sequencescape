@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20120327084706) do
+ActiveRecord::Schema.define(:version => 20120506092548) do
 
   create_table "aliquots", :force => true do |t|
     t.integer  "receptacle_id",    :null => false
@@ -72,10 +72,12 @@ ActiveRecord::Schema.define(:version => 20120327084706) do
   end
 
   create_table "asset_links", :force => true do |t|
-    t.integer "ancestor_id"
-    t.integer "descendant_id"
-    t.boolean "direct"
-    t.integer "count"
+    t.integer  "ancestor_id"
+    t.integer  "descendant_id"
+    t.boolean  "direct"
+    t.integer  "count"
+    t.datetime "created_at",    :null => false
+    t.datetime "updated_at",    :null => false
   end
 
   add_index "asset_links", ["ancestor_id", "direct"], :name => "index_asset_links_on_ancestor_id_and_direct"
@@ -142,12 +144,13 @@ ActiveRecord::Schema.define(:version => 20120327084706) do
 
   create_table "bait_libraries", :force => true do |t|
     t.integer  "bait_library_supplier_id"
-    t.string   "name",                     :null => false
+    t.string   "name",                                       :null => false
     t.string   "supplier_identifier"
-    t.string   "target_species",           :null => false
+    t.string   "target_species",                             :null => false
     t.datetime "created_at"
     t.datetime "updated_at"
-    t.integer  "bait_library_type_id",     :null => false
+    t.integer  "bait_library_type_id",                       :null => false
+    t.boolean  "visible",                  :default => true, :null => false
   end
 
   add_index "bait_libraries", ["bait_library_supplier_id", "name"], :name => "bait_library_names_are_unique_within_a_supplier", :unique => true
@@ -163,17 +166,19 @@ ActiveRecord::Schema.define(:version => 20120327084706) do
   add_index "bait_library_layouts", ["plate_id"], :name => "bait_libraries_are_laid_out_on_a_plate_once", :unique => true
 
   create_table "bait_library_suppliers", :force => true do |t|
-    t.string   "name",       :null => false
+    t.string   "name",                         :null => false
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.boolean  "visible",    :default => true, :null => false
   end
 
   add_index "bait_library_suppliers", ["name"], :name => "index_bait_library_suppliers_on_name", :unique => true
 
   create_table "bait_library_types", :force => true do |t|
-    t.string   "name",       :null => false
+    t.string   "name",                         :null => false
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.boolean  "visible",    :default => true, :null => false
   end
 
   add_index "bait_library_types", ["name"], :name => "index_bait_library_types_on_name", :unique => true
@@ -205,12 +210,11 @@ ActiveRecord::Schema.define(:version => 20120327084706) do
   end
 
   create_table "batch_requests", :force => true do |t|
-    t.integer  "batch_id"
-    t.integer  "request_id"
+    t.integer  "batch_id",   :null => false
+    t.integer  "request_id", :null => false
     t.integer  "position"
     t.datetime "created_at"
     t.datetime "updated_at"
-    t.string   "depricated_qc_state", :limit => 20
   end
 
   add_index "batch_requests", ["batch_id"], :name => "index_batch_requests_on_batch_id"

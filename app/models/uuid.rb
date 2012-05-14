@@ -10,11 +10,35 @@ class Uuid < ActiveRecord::Base
         # It seems better not to do this but the performance of the API is directly affected by having to
         # create these instances when they do not exist.
         has_one :uuid_object, :class_name => 'Uuid', :as => :resource, :dependent => :destroy
-        after_create { |record| record.create_uuid_object if record.uuid_object(true).nil? }
+        after_create :ensure_uuid_created
 
         # Some named scopes ...
         named_scope :include_uuid, { :include => :uuid_object }
       end
+    end
+
+    # In the test environment we need to have a slightly different behaviour, as we can predefine
+    # the UUID for a record to make things predictable.  In production new records always have new
+    # UUIDs.
+    if ['test', 'cucumber'].include?(RAILS_ENV)
+      def ensure_uuid_created
+        self.uuid_object = Uuid.create!(:resource => self) if self.uuid_object(true).nil?
+      end
+    else
+      def ensure_uuid_created
+        self.uuid_object = Uuid.create!(:resource => self)
+      end
+    end
+    private :ensure_uuid_created
+
+    # Marks a record as being unsaved and hence the UUID is not present.  This is not something we
+    # want to actually happen without being explicitly told; hence, the 'uuid' method below will
+    # error if the record is unsaved as that's exactly what should happen.
+    #
+    # It also means that marking a record by calling this method, and then attempting to save it,
+    # will result in another validation exception.  Again, exactly what we want.
+    def unsaved_uuid!
+      self.uuid_object = Uuid.new(:external_id => nil)
     end
 
     #--
@@ -60,14 +84,11 @@ class Uuid < ActiveRecord::Base
   end
 
   ValidRegexp = /^[\da-f]{8}(-[\da-f]{4}){3}-[\da-f]{12}$/
-  validates_presence_of :external_id
   validates_format_of :external_id, :with => ValidRegexp
 
   # It is more efficient to check the individual parts of the resource association than it is to check the
   # association itself as the latter causes the record to be reloaded
   belongs_to :resource, :polymorphic => true
-  validates_presence_of :resource_type
-  validates_presence_of :resource_id
 
   # TODO[xxx]: remove this and use resource everywhere!
   def object
